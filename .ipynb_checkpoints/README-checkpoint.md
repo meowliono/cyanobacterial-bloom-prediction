@@ -3,11 +3,8 @@
 - Large, shallow
 - Eutrophic(average TP=100 µg/L)
 - Cynobacteria-caused taste and odor and toxin events since 1990
-## Solar and precipitation data
-The data is from [**NASA Prediction Of Worldwide Energy Resources (POWER) Project**](https://power.larc.nasa.gov/). The Power Project contains Near Real Time(NRT) satellite-derived meterorology and solar energy data. 
-All Sky Insolation Incident on a Horizontal Surface: The average amount of the total solar radiation incident on a horizontal surface at the surface of the earth. The unit is MJ/m^2/day.
 ## Data set:
-- May 2001 to June 2015
+- May 2011 to June 2015
 - Collected at the surface(0.5m) with Kemmerer sampler from May 2001 to July 2004. Vertical integrated photic zone samples were collected from August 2004 to June 2015.
 - Geosmin: GC-MS
 - Microcystin: ELISA
@@ -24,8 +21,3 @@ All Sky Insolation Incident on a Horizontal Surface: The average amount of the t
 - Cyanobacterial abundance: cyanobacteria_abundance.csv(超链接):185 observations
 - Microcystin: microcystin.csv(超链接):176 observations 
 - Geosmin: geosmin.csv（超链接）:185 observations
-## Variables:
-![image](var1.png)
-- ALLSKY_SFC_SW_DWN: All Sky Insolation Incident on a Horizontal Surface (MJ/m^2/day)
-- PRECTOT: Precipitation (mm/day)
-##
