@@ -19,13 +19,36 @@ All Sky Insolation Incident on a Horizontal Surface: The average amount of the t
 - Variables and response with concentrations less than the analytical limit of detection were substituted with a value half of the limit of detection
 - Seasonality is an explanatory variable –Fourier transformed the data variable (i.e. sin and cos)
 - 24 potential variables left
-- Used elevation as surrogate for extreme precipitation events
-## Data cleaned:
-- Cyanobacterial abundance: cyanobacteria_abundance.csv(超链接):185 observations
-- Microcystin: microcystin.csv(超链接):176 observations 
-- Geosmin: geosmin.csv（超链接）:185 observations
+Harris's paper ranked the 20 most important variables for predicting cyanobacteria, geosmin, microcystin using SVM, RF, BT, Cubist modeling. I selected the top 6~7 variables as well as solar radiation and precipitation for each model to avoid long operation time.
 ## Variables:
-![image](var1.png)
+- Temp : Temperature
+- TP: Total Phosphorus
+- Fe: Iron (µg/L)
+- DO: Dissolved oxygen (mg/L)
+- Chl-a: Chlorophyll a(µg/L)
+- TKN: Total Kjeldahl nitrogen(mg/L as N)
+- SSC: Suspended sediment concentration(mg/L)
+- Si: Silica(mg/L as SiO2)
+- DP: Dissolved phosphorus(mg/L as P)
+- NO: Nitrate plus nitrite(mg/L as N)
 - ALLSKY_SFC_SW_DWN: All Sky Insolation Incident on a Horizontal Surface (MJ/m^2/day)
 - PRECTOT: Precipitation (mm/day)
-##
+## Model Structure
+Pgmpy score-based structure learning is very slow working with large(150 rows) data. I randomly sampled 20% data and used Hill Climbing search. The following are the learned structures. Constraint-based structure learning and other library can be tried later.
+- Microcystin:<br>
+![image](mc_directed_graph.png)
+- Geosmin:<br>
+![image](geo_directed_graph.png)
+- Cyanobacteria:<br>
+![image](cyano_directed_graph.png)
+## Parameter
+Used maximum likelihood estimator, which may cause overfitting. I will try Bayesian estimator later.
+## Inference:
+- MAP inference:
+I used belief propapgation method, but the evidence needs to be integer. I'm thinking about converting the Bayesian network to Markov and factor graph and using Max-Product algorithm. Still working on the pgmpy documents for the solution to deal with continuous variables.
+- Marginal probability distribution
+## Reference
+[1]pgmpy library: https://pgmpy.org/index.html
+[2]Ankan, A., & Panda, A. (2015). pgmpy: Probabilistic graphical models using python. In Proceedings of the 14th Python in Science Conference (SCIPY 2015). Citeseer (Vol. 10).
+[3]Koller, D., & Friedman, N. (2009). Probabilistic graphical models: principles and techniques. MIT press.
+[4]Bishop, C. M. (2006). Pattern recognition and machine learning. springer.
