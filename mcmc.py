@@ -7,11 +7,6 @@ import seaborn as sns
 import pandas as pd
 from theano import shared
 from sklearn import preprocessing
-df=pd.read_csv("cyano_train.csv")
-df.head()
-with pm.Model() as model:
-    mu = pm.Uniform('mu', lower=10, upper=20)
-    sigma = pm.HalfNormal('sigma',sd=10)
-    y = pm.Normal('y', mu=mu, sd=sigma, observed=df['Turb'].values)
-    trace_g = pm.sample(1000, tune=1000)
-az.plot_trace(trace_g)
+from pgmpy.factors.continuous import LinearGaussianCPD
+cpd = LinearGaussianCPD('Y',  [0.2, -2, 3, 7], 9.6, ['X1', 'X2', 'X3'])
+print(cpd)
