@@ -34,21 +34,16 @@ Harris's paper ranked the 20 most important variables for predicting cyanobacter
 - ALLSKY_SFC_SW_DWN: All Sky Insolation Incident on a Horizontal Surface (MJ/m^2/day)
 - PRECTOT: Precipitation (mm/day)
 ## Model Structure
-Pgmpy score-based structure learning is very slow working with large(150 rows) data. I randomly sampled 20% data and used Hill Climbing search. The following are the learned structures. Constraint-based structure learning and other library can be tried later.
-- Microcystin:<br>
-![image](mc_directed_graph.png)
-- Geosmin:<br>
-![image](geo_directed_graph.png)
-- Cyanobacteria:<br>
-![image](cyano_directed_graph.png)
+The following structure is built on prior knowledge is this area.
+This representation is based on the linear Gaussian model. It is a Bayesian network all of whose variables are continuous and all of the CPDs are linear Gaussians 
+![image](my_graph.png)
 ## Parameter
-Used maximum likelihood estimator, which may cause overfitting. I will try Bayesian estimator later.
+Used MCMC and NUTS sampler(in PyMC3 library) to learn posterior probability of each node.
 ## Inference:
-- MAP inference:
-I used belief propapgation method, but the evidence needs to be integer. I'm thinking about converting the Bayesian network to Markov and factor graph and using Max-Product algorithm. Still working on the pgmpy documents for the solution to deal with continuous variables.
-- Marginal probability distribution
+MAP inference using LGNpy package.
 ## Reference
-[1]pgmpy library: https://pgmpy.org/index.html
-[2]Ankan, A., & Panda, A. (2015). pgmpy: Probabilistic graphical models using python. In Proceedings of the 14th Python in Science Conference (SCIPY 2015). Citeseer (Vol. 10).
-[3]Koller, D., & Friedman, N. (2009). Probabilistic graphical models: principles and techniques. MIT press.
-[4]Bishop, C. M. (2006). Pattern recognition and machine learning. springer.
+[1]PyMC3:https://docs.pymc.io/
+[2]LGNpy:https://pypi.org/project/LGNpy/
+[3]Ankan, A., & Panda, A. (2015). pgmpy: Probabilistic graphical models using python. In Proceedings of the 14th Python in Science Conference (SCIPY 2015). Citeseer (Vol. 10).
+[4]Koller, D., & Friedman, N. (2009). Probabilistic graphical models: principles and techniques. MIT press.
+[5]Bishop, C. M. (2006). Pattern recognition and machine learning. springer.
