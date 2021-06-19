@@ -1,0 +1,502 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+## Data loading
+```{r}
+## Data import
+data<-read.csv("/Users/yiraozhang/Desktop/cyanobacteria_pgm/cyanobacterial-bloom-prediction/cyano&spw.csv")
+data$Cyano<-as.double(data$Cyano)
+vars <- c("DO", "ALLSKY_SFC_SW_DWN", "PRECTOT","WS10M_RANGE","pH","elev","Temp","TN","TP","Chl.a","TNTP","NONH","Turb","Fe","TKN","Spc","Cyano")
+data <- data[vars]
+colnames(data)<-c("DO", "Solar_radiation", "Precipitation","Wind","pH","Elevation","Temp","TN","TP","Chl.a","TNTP","NONH","Turb","Fe","TKN","Spc","Cyano")
+data
+```
+## Data preprocessing
+https://www.waterra.com.au/cyanobacteria-manual/Chapter6.htm
+Threshold definitions for a general Alert Levels Framework for management of toxic cyanobacteria in drinking water:
+**Low alert**: <br>
+Detection> 500 & < 2,000 cells mL^-1^
+**Medium alert**:<br>
+Detection >2,000(2) & < 6,500 cells mL^-1^
+**High alert**:<br>
+Detection > 6,500 cells mL^-1^
+**Very high alert**<br>
+Detection > 65,000 cells mL^-1^
+```{r}
+## Categorize
+data$category<-"safe"
+data$category[data$Cyano>500 & data$Cyano<2000] <- "low"
+data$category[data$Cyano>2000 &data$Cyano<6500] <- "medium"
+data$category[data$Cyano>6500 &data$Cyano<65000] <- "high"
+data$category[data$Cyano>65000] <- "veryhigh"
+## Split training/test set
+library(caTools)
+set.seed(100) 
+sample = sample.split(data, SplitRatio = .8)
+train = subset(data, sample == TRUE)
+test  = subset(data, sample == FALSE)
+data<-train
+```
+## Data discription and visiualization
+```{r}
+library(ggplot2)
+library(ggthemes)
+library(cowplot)
+## Attribute Histograms
+tema = theme(plot.background = element_rect(fill="#E0FFFF"),
+             axis.title.x = element_text(size=8, color = "black"),
+             axis.title.y = element_text(size=8, color = "black"),
+             axis.text.x = element_text(size=5),
+             axis.text.y = element_text(size=5))
+do<-ggplot(data = data, mapping = aes(x = DO)) +
+    geom_histogram(bins=30, fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("DO") +
+    tema
+wind<-ggplot(data = data, mapping = aes(x = Wind)) +
+    geom_histogram(bins=30, fill = "blue", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Wind") +
+    tema
+solar<-ggplot(data = data, mapping = aes(x = Solar_radiation)) +
+    geom_histogram(bins=30, fill = "green", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Solar") +
+    tema
+prec<-ggplot(data = data, mapping = aes(x = Precipitation)) +
+    geom_histogram(bins=30, fill = "yellow", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Precipitation") +
+    tema
+ph<-ggplot(data = data, mapping = aes(x = pH)) +
+    geom_histogram(bins=30, fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("pH") +
+    tema
+elev<-ggplot(data = data, mapping = aes(x = Elevation)) +
+    geom_histogram(bins=30, fill = "blue", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Elevation") +
+    tema
+temp<-ggplot(data = data, mapping = aes(x = Temp)) +
+    geom_histogram(bins=30, fill = "green", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Temperature") +
+    tema
+tn<-ggplot(data = data, mapping = aes(x = TN)) +
+    geom_histogram(bins=30, fill = "yellow", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Total Nitrogen") +
+    tema
+tp<-ggplot(data = data, mapping = aes(x = TP)) +
+    geom_histogram(bins=30, fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("TP") +
+    tema
+tntp<-ggplot(data = data, mapping = aes(x = TNTP)) +
+    geom_histogram(bins=30, fill = "blue", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("TNTP") +
+    tema
+chl.a<-ggplot(data = data, mapping = aes(x = Chl.a)) +
+    geom_histogram(bins=30, fill = "green", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Chl.a") +
+    tema
+nonh<-ggplot(data = data, mapping = aes(x = NONH)) +
+    geom_histogram(bins=30, fill = "yellow", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("NONH") +
+    tema
+turb<-ggplot(data = data, mapping = aes(x = Turb)) +
+    geom_histogram(bins=30, fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Turbidity") +
+    tema
+fe<-ggplot(data = data, mapping = aes(x = Fe)) +
+    geom_histogram(bins=30, fill = "blue", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Fe") +
+    tema
+tkn<-ggplot(data = data, mapping = aes(x = TKN)) +
+    geom_histogram(bins=30, fill = "green", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Total Kjeldahl Nitrogen") +
+    tema
+spc<-ggplot(data = data, mapping = aes(x = Spc)) +
+    geom_histogram(bins=30, fill = "yellow", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Specific Conductance") +
+    tema
+cyano<-ggplot(data = data, mapping = aes(x = Cyano)) +
+    geom_histogram(bins=30, fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Cyanobacteria Abundance") +
+    tema
+plot_grid(do, wind, solar, prec, ph, elev, temp, tn, tp, tntp, chl.a, nonh, turb, fe, tkn, spc, nrow=4, ncol=4)
+plot_grid(cyano)
+```
+```{r}
+## Density plot and boxplot
+tema = theme(plot.background = element_rect(fill="#E0FFFF"),
+             axis.title.x = element_text(size=8, color = "black"),
+             axis.title.y = element_text(size=8, color = "black"),
+             axis.text.x = element_text(size=5),
+             axis.text.y = element_text(size=5))
+do<-ggplot(data = data, mapping = aes(x = DO)) +
+    geom_density( fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("DO") +
+    tema
+wind<-ggplot(data = data, mapping = aes(x = Wind)) +
+    geom_density( fill = "blue", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("Wind") +
+    tema
+solar<-ggplot(data = data, mapping = aes(x = Solar_radiation)) +
+    geom_density( fill = "green", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("Solar") +
+    tema
+prec<-ggplot(data = data, mapping = aes(x = Precipitation)) +
+    geom_density( fill = "yellow", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("Precipitation") +
+    tema
+ph<-ggplot(data = data, mapping = aes(x = pH)) +
+    geom_density( fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("pH") +
+    tema
+elev<-ggplot(data = data, mapping = aes(x = Elevation)) +
+    geom_density( fill = "blue", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("Elevation") +
+    tema
+temp<-ggplot(data = data, mapping = aes(x = Temp)) +
+    geom_density( fill = "green", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("Temperature") +
+    tema
+tn<-ggplot(data = data, mapping = aes(x = TN)) +
+    geom_density( fill = "yellow", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("Total Nitrogen") +
+    tema
+tp<-ggplot(data = data, mapping = aes(x = TP)) +
+    geom_density( fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("TP") +
+    tema
+tntp<-ggplot(data = data, mapping = aes(x = TNTP)) +
+    geom_density( fill = "blue", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("TNTP") +
+    tema
+chl.a<-ggplot(data = data, mapping = aes(x = Chl.a)) +
+    geom_density( fill = "green", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("Chl.a") +
+    tema
+nonh<-ggplot(data = data, mapping = aes(x = NONH)) +
+    geom_density( fill = "yellow", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("NONH") +
+    tema
+turb<-ggplot(data = data, mapping = aes(x = Turb)) +
+    geom_density( fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("Turbidity") +
+    tema
+fe<-ggplot(data = data, mapping = aes(x = Fe)) +
+    geom_density( fill = "blue", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("Fe") +
+    tema
+tkn<-ggplot(data = data, mapping = aes(x = TKN)) +
+    geom_density( fill = "green", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("Total Kjeldahl Nitrogen") +
+    tema
+spc<-ggplot(data = data, mapping = aes(x = Spc)) +
+    geom_density( fill = "yellow", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("Specific Conductance") +
+    tema
+cyano<-ggplot(data = data, mapping = aes(x = Cyano)) +
+    geom_density( fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist()+
+    xlab("Cyanobacteria Abundance") +
+    tema
+plot_grid(do, wind, solar, prec, ph, elev, temp, tn, tp, tntp, chl.a, nonh, turb, fe, tkn, spc, nrow=4, ncol=4)
+plot_grid(cyano)
+```
+```{r}
+## Correlation graph
+library(GGally)
+df <- subset(data, select = -c(category, Cyano))
+colnames(df)<-c("DO", "Solar", "Precipitation","Wind","pH","Elevation","Temp","TN","TP","Chl.a","TNTP","NONH","Turb","Fe","TKN","Spc")
+ggcorr(df)
+```
+## Log-transform variables
+```{r}
+data_transformed<-data
+data_transformed$DO<-log(data_transformed$DO)
+data_transformed$Solar_radiation<-log(data_transformed$Solar_radiation)
+data_transformed$TN<-log(data_transformed$TN)
+data_transformed$TP<-log(data_transformed$TP)
+data_transformed$Chl.a<-log(data_transformed$Chl.a)
+data_transformed$pH<-log(data_transformed$pH)
+data_transformed$TNTP<-log(data_transformed$TNTP)
+data_transformed$Temp<-log(data_transformed$Temp)
+data_transformed$Cyano<-log(data_transformed$Cyano)
+data_transformed$Elevation<-log(data_transformed$Elevation)
+data_transformed$TKN<-log(data_transformed$TKN)
+data_transformed$Fe<-log(data_transformed$Fe)
+data_transformed$NONH<-log(data_transformed$NONH)
+data_transformed$Turb<-log(data_transformed$Turb)
+data_transformed$Spc<-log(data_transformed$Spc)
+data_transformed$Wind<-log(data_transformed$Wind)
+tema = theme(plot.background = element_rect(fill="#E0FFFF"),
+             axis.title.x = element_text(size=8, color = "black"),
+             axis.text.x = element_text(size=5),
+             axis.text.y = element_text(size=5))
+do<-ggplot(data = data_transformed, mapping = aes(x = DO)) +
+    geom_histogram(bins=30, fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("DO") +
+    tema
+wind<-ggplot(data = data_transformed, mapping = aes(x = Wind)) +
+    geom_histogram(bins=30, fill = "blue", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Wind") +
+    tema
+solar<-ggplot(data = data_transformed, mapping = aes(x = Solar_radiation)) +
+    geom_histogram(bins=30, fill = "green", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Solar") +
+    tema
+prec<-ggplot(data = data_transformed, mapping = aes(x = Precipitation)) +
+    geom_histogram(bins=30, fill = "yellow", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Precipitation") +
+    tema
+ph<-ggplot(data = data_transformed, mapping = aes(x = pH)) +
+    geom_histogram(bins=30, fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("pH") +
+    tema
+elev<-ggplot(data = data_transformed, mapping = aes(x = Elevation)) +
+    geom_histogram(bins=30, fill = "blue", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Elevation") +
+    tema
+temp<-ggplot(data = data_transformed, mapping = aes(x = Temp)) +
+    geom_histogram(bins=30, fill = "green", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Temperature") +
+    tema
+tn<-ggplot(data = data_transformed, mapping = aes(x = TN)) +
+    geom_histogram(bins=30, fill = "yellow", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Total Nitrogen") +
+    tema
+tp<-ggplot(data = data_transformed, mapping = aes(x = TP)) +
+    geom_histogram(bins=30, fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("TP") +
+    tema
+tntp<-ggplot(data = data_transformed, mapping = aes(x = TNTP)) +
+    geom_histogram(bins=30, fill = "blue", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("TNTP") +
+    tema
+chl.a<-ggplot(data = data_transformed, mapping = aes(x = Chl.a)) +
+    geom_histogram(bins=30, fill = "green", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Chl.a") +
+    tema
+nonh<-ggplot(data = data_transformed, mapping = aes(x = NONH)) +
+    geom_histogram(bins=30, fill = "yellow", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("NONH") +
+    tema
+turb<-ggplot(data = data_transformed, mapping = aes(x = Turb)) +
+    geom_histogram(bins=30, fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Turbidity") +
+    tema
+fe<-ggplot(data = data_transformed, mapping = aes(x = Fe)) +
+    geom_histogram(bins=30, fill = "blue", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Fe") +
+    tema
+tkn<-ggplot(data = data_transformed, mapping = aes(x = TKN)) +
+    geom_histogram(bins=30, fill = "green", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Total Kjeldahl Nitrogen") +
+    tema
+spc<-ggplot(data = data_transformed, mapping = aes(x = Spc)) +
+    geom_histogram(bins=30, fill = "yellow", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Specific Conductance") +
+    tema
+cyano<-ggplot(data = data_transformed, mapping = aes(x = Cyano)) +
+    geom_histogram(bins=30, fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Cyanobacteria Abundance") +
+    tema
+plot_grid(do, wind, solar, prec, ph, elev, temp, tn, tp, tntp, chl.a, nonh, turb, fe, tkn, spc, nrow=4, ncol=4)
+plot_grid(cyano)
+```
+## Subset with Cyanobacteria abundance>0
+```{r}
+df<-data_transformed[data_transformed$Cyano>0,]
+cyano<-ggplot(data = df, mapping = aes(x = Cyano)) +
+    geom_histogram(bins=30, fill = "red", color = "black", size = 1.0, alpha = .5) +
+    theme_economist() +
+    xlab("Cyanobacteria Abundance") +tema
+plot_grid(cyano)
+```
+## Normality Visual Check with Q-Q plot
+```{r}
+library(car)
+par(mfrow = c(2, 3))
+qqPlot(data_transformed$pH)
+qqPlot(data_transformed$DO)
+qqPlot(data_transformed$Wind)
+qqPlot(data_transformed$TN)
+qqPlot(data_transformed$TP)
+qqPlot(data_transformed$TNTP)
+par(mfrow = c(2, 3))
+qqPlot(data_transformed$NONH)
+qqPlot(data_transformed$Turb)
+qqPlot(data_transformed$Chl.a)
+qqPlot(data_transformed$Cyano)
+```
+## ## Structure learning with **bnlearn**
+```{r}
+library(bnlearn)
+library(Rgraphviz)
+df <- subset(df, select = -c(Fe, TKN, category, Spc))
+bl=matrix(c("Turb","Temp","Turb","DO","DO","Temp","Chl.a","Temp","Elevation","pH","pH","Elevation","Elevation","TN","TN","Elevation","pH","Temp","Solar_radiation","Elevation","Cyano","Temp","Cyano","Elevation","Elevation","Cyano", "Chl.a", "Cyano","Solar_radiation","Turb", "Precipitation","Temp","Chl.a","pH"), ncol = 2, byrow = TRUE)
+net1<-tabu(df, blacklist = bl)
+graphviz.plot(net1)
+```
+## Generalized Linear Model
+```{r}
+data$Cyano[data$Cyano==1] <- 0
+test$Cyano[test$Cyano==1] <- 0
+# zero-inflated data
+length(which(data$Cyano==0))/length(data$Cyano)
+## GLM Poisson
+library(MASS)
+model_poisson <- glm(Cyano ~ TP + pH + Temp + Solar_radiation + Chl.a,
+          family = 'poisson',
+          data = data)
+res <- resid(model_poisson, type = "pearson")
+N  <- nrow(data)
+p  <- length(coef(model_poisson))   
+sum(res^2) / (N - p)
+## GLM Negative Binomial
+model_negbin <- glm.nb(Cyano ~ TP + pH + Temp + Solar_radiation + Chl.a,
+          data = data)
+## Zero-inflated NB
+library(pscl)
+model_ZINB <- zeroinfl(Cyano ~ TP + pH + Temp + Solar_radiation + Chl.a|
+                 TP + pH + Temp + Solar_radiation + Chl.a,
+               dist = 'negbin',
+               data = data)
+## Hurdle NB
+model_hurdleNB <-hurdle(Cyano ~ TP + pH + Temp + Solar_radiation + Chl.a|
+                 TP + pH + Temp + Solar_radiation + Chl.a,
+               dist = 'negbin',
+               data = data)
+```
+## Model selection
+```{r}
+AIC(model_negbin, model_ZINB, model_hurdleNB)
+```
+
+```{r}
+library(pscl)
+vuong(model_negbin, model_hurdleNB)
+vuong(model_negbin, model_ZINB)
+vuong(model_ZINB, model_hurdleNB)
+```
+
+## MCMC
+```{r}
+library(dplyr)
+library(magrittr)
+library(rstan)
+x<-data %>% select(TP, Solar_radiation, pH, Temp, Chl.a)
+x_test<-test%>%select(TP, Solar_radiation, pH, Temp, Chl.a)
+stan_data <- list(N=nrow(x),
+                  K=ncol(x),
+                  x=x,
+                  y=data$Cyano,
+                  N_test=nrow(x_test),
+                  x_test=x_test)
+fit <- stan(file = 'ZINB.stan', data = stan_data, iter = 1000, chains = 4)
+```
+```{r}
+head(summary(fit)$summary, n=13L)
+```
+```{r}
+plot(fit)
+pairs(fit, pars = c("intercept1", "intercept2", "phi"))
+pairs(fit, pars = c("beta_mu[2]","beta_mu[4]"))
+pairs(fit, pars = c("beta_theta[3]","beta_theta[5]"))
+```
+## Colinearity
+```{r}
+cor(x$pH, x$Chl.a)
+cor(x$Solar_radiation, x$Temp)
+```
+```{r}
+traceplot(fit, inc_warmup = TRUE)
+```
+## Posterior Predictive Checks (PPCs)
+The idea behind posterior predictive checking is simple: if a model is a good fit then we should be able to use it to generate data that looks a lot like the data we observed. 
+```{r}
+library(bayesplot)
+y_rep <- as.matrix(fit, pars = "y_pre")
+color_scheme_set("brightblue")
+ppc_dens_overlay(test$Cyano, y_rep[1:200, ])+ xlim(0, 100000)
+#Here we see data (dark blue) fit well with our posterior predictions.
+```
+```{r}
+ppc_stat(y = test$Cyano, yrep = y_rep, stat = "mean") + xlim(0, 100000)
+```
+```{r}
+prop_zero <- function(x) mean(x == 0)
+ppc_stat(y = test$Cyano, yrep = y_rep, stat = "prop_zero") + xlim(0, 1)
+```
+## Evalute and compare the regression models
+```{r}
+library(berryFunctions)
+library(Metrics)
+#zero-inflated negative binomial glm model
+predict1 <-as.data.frame(predict(model_ZINB,newdata=test,type='response'))
+colnames(predict1)<-c("Cyano")
+rsq1<-rsquare(predict1$Cyano, test$Cyano)
+rmse1<-rmse(predict1$Cyano, test$Cyano)
+mae1<-mae(predict1$Cyano, test$Cyano)
+#Bayesian zero-inflated negative binomial glm model
+predict2<-as.data.frame(apply(y_rep, 2, median))
+colnames(predict2)<-c("Cyano")
+rsq2<-rsquare(predict2$Cyano, test$Cyano)
+rmse2<-rmse(predict2$Cyano, test$Cyano)
+mae2<-mae(predict2$Cyano, test$Cyano)
+#result table
+result<-matrix(c(rsq1, rmse1, mae1, rsq2, rmse2, mae2), ncol=3, byrow=TRUE)
+colnames(result) <- c("R_squared","RMSE","MAE")
+rownames(result) <- c("ZINB","Bayesian ZINB")
+result <- as.table(result)
+result
+```
+#Sensitivity Analysis
+```{r}
+```
